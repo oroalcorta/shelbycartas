@@ -270,7 +270,9 @@
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwb3V0amtsamtyYmxpaWthemtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5ODAxMjAsImV4cCI6MjA2ODU1NjEyMH0.8aZys2dBiNbLis7ls7ZwiBt25eWbsSvSzjpO21Al2r8';
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const hoy = new Date().toISOString().split('T')[0];
+const hoy = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000))
+  .toISOString()
+  .split('T')[0];
 let fingerprint = "";
 let casino = "CASINO SHELBY - CARTAS"; // poné el nombre real que uses en Supabase
 
