@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CASINO SHELBY - CARTAS</title>
+  <style>
+  body {
+    margin: 0;
+    background: #111; /* fondo estilo oscuro mafia */
+    font-family: 'Arial Black', sans-serif;
+    color: white;
+    text-align: center;
+  }
+  h1 {
+    color: #e0b000;
+    text-shadow: 0 0 10px #e0b000;
+    margin: 10px 0 5px;
+    font-size: 26px;
+  }
+  .top-info {
+    margin: 2px 0;
+    font-size: 14px;
+  }
+
+  .frase-juego {
+    font-size: 13px;
+    margin: 4px 0 6px;
+    line-height: 1;
+    font-weight: normal;
+    margin-bottom: 5px;
+  }
+  h4 {
+    font-size: 14px;
+    margin: 5px 0 0;
+  }
+  .hidden {
+    display: none;
+  }
+  .input-container input {
+    padding: 12px;
+    font-size: 16px;
+    width: 80%;
+    border: none;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .input-container input.error {
+    border: 2px solid red;
+  }
+  .btn {
+    margin-top: 20px;
+    padding: 15px 25px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    background-color: #e0b000;
+    color: #000;
+    font-weight: bold;
+  }
+  .whatsapp {
+    background-color: #25D366;
+    color: white;
+    margin-top: 20px;
+    padding: 12px;
+    display: inline-block;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .game-area {
+    max-width: 420px;
+    margin: auto;
+    padding-bottom: 60px;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    justify-content: center;
+  }
+  .card {
+    width: 60px;
+    height: 80px;
+    border-radius: 10px;
+    perspective: 1000px;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 1s;
+    transform-style: preserve-3d;
+  }
+
+  .card.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 20px;
+  }
+
+  .card-front {
+    background-color: #e0b000;
+    color: black;
+  }
+
+  .card-back {
+    transform: rotateY(180deg);
+    flex-direction: column;
+  }
+    .prize-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 10px 0 15px;
+  margin-top: 4px;  /* antes decía 20px o 10px */
+  margin-bottom: 10px;
+}
+    .prize-item {
+      padding: 5px;
+      background-color: #111;
+      border: 2px solid #FFD700;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    #result {
+      font-size: 18px;
+      margin-top: 20px;
+      color: #FFD700;
+    }
+    .premio-box {
+  background-color: white;
+  color: black;
+  padding: 4px 6px;
+  border-radius: 6px;
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+.prize-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+}
+.card-grid-wrapper {
+  padding: 10px;
+  border: 2px solid #444;
+  border-radius: 10px;
+  margin-top: 10px;
+  background-color: #111;
+}
+#result {
+  font-size: 18px;
+  margin-top: 10px;
+  color: #f0e6d2;
+  background-color: #1a1a1a;
+  border: 2px solid #6e552d;
+  border-radius: 10px;
+  display: inline-block;
+  padding: 10px 15px;
+  font-weight: bold;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  box-shadow: 0 0 10px #6e552d;
+}
+.reclamo-info {
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #bfa774;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.card.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(100%);
+}
+  </style>
+</head>
+<body>
+  <div id="start-screen">
+  <div class="container">
+    <h1 style="color: #c9b37e; font-size: 1.8rem; margin-top: 10px; text-shadow: 0 0 10px #000, 0 0 15px #c9b37e;">🎩 CASINO SHELBY - CARTAS 🔫</h1>
+
+<input id="username" placeholder="🕵️‍♂️ INGRESÁ TU USUARIO 🥃"
+      style="width: 90%; padding: 1rem; font-size: 1.1rem; margin: 10px auto; border-radius: 10px; border: none; text-align: center;"
+    />
+
+    <button onclick="startGame()" style="width: 90%; padding: 1rem; font-size: 1.1rem; background: linear-gradient(45deg, #2c2c2c, #1a1a1a); color: #c9b37e; font-weight: bold; border-radius: 10px; border: none; box-shadow: 0 0 10px #c9b37e; margin-top: 10px;">🥃 ENTRAR AL CASINO 🕵️‍♂️</button>
+
+    <div id="info-footer" style="
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #1a1a1a;
+  color: #c9b37e;
+  border-radius: 12px 12px 0 0;
+  padding: 1rem 0.5rem;
+  box-shadow: 0 0 12px #6e552d;
+  font-weight: bold;
+  text-align: center;
+  z-index: 999;
+">
+  <div style="font-size: 1.3rem;">🎩 CASINO SHELBY 🎩</div>
+  <div style="margin-top: 5px;">🔫 LÍNEA ACTIVA 24HS - TODOS LOS PREMIOS SE PAGAN AL INSTANTE 🥃</div>
+  <a href="https://wa.me/5491144203751" target="_blank" style="
+    background-color: #25D366;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 10px;
+    box-shadow: 0 0 10px #25D366;
+  ">📞 CONTACTANOS POR WHATSAPP</a>
+</div>
+    </div>
+  </div>
+</div>
+
+  <div id="game-screen" class="hidden">
+    <div class="game-area">
+      <h1>CASINO SHELBY - CARTAS</h1>
+      <p class="top-info">📅 <span id="fecha"></span> 🕒 <span id="hora"></span></p>
+<p class="top-info">👤 <span id="nombre-usuario"></span></p>
+<p class="frase-juego">🎯 Desbloqueá las cartas... ¡Si hacés 3 iguales ganás!</p>
+      <h4>🎩 Premios posibles:</h4>
+<div class="prize-list">
+  <div class="prize-item" style="background-color: #8b0eb1;">💼 <span class="premio-box">2.500 GRATIS</span></div>
+  <div class="prize-item" style="background-color: #8b0000;">💣 <span class="premio-box">100% BONI</span></div>
+  <div class="prize-item" style="background-color: #123199;">🥃 <span class="premio-box">50% BONI</span></div>
+  <div class="prize-item" style="background-color: #5a2a2a;">🕵️‍♂️ <span class="premio-box">20% BONI</span></div>
+  <div class="prize-item" style="background-color: #444400;">💰 <span class="premio-box">10.000 GRATIS</span></div>
+  <div class="prize-item" style="background-color: #555555;">🎩 <span class="premio-box">5.000 GRATIS</span></div>
+  <div class="prize-item" style="background-color: #cf511c;">🔫 <span class="premio-box">100.000 GRATIS</span></div>
+  <div class="prize-item" style="background-color: #111111;">👑 <span class="premio-box">500.000 GRATIS</span></div>
+</div>
+      <div class="card-grid-wrapper">
+  <div class="card-grid" id="cardGrid"></div>
+</div>
+      <div id="result"></div>
+      <p class="reclamo-info">📲 RECLAMÁ TU PREMIO ENVIANDO ESTA CAPTURA AL WHATSAPP</p>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://wpoutjkljkrbliikazkh.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwb3V0amtsamtyYmxpaWthemtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5ODAxMjAsImV4cCI6MjA2ODU1NjEyMH0.8aZys2dBiNbLis7ls7ZwiBt25eWbsSvSzjpO21Al2r8';
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const hoy = new Date().toISOString().split('T')[0];
+let fingerprint = "";
+let casino = "CASINO SHELBY - CARTAS"; // poné el nombre real que uses en Supabase
+
+let fpReady = FingerprintJS.load().then(fp => fp.get().then(result => {
+  fingerprint = result.visitorId;
+}));
+    const premios = [
+  { nombre: '2.500 GRATIS', emoji: '💼', fondo: '#8b0eb1', apariciones: [100, 100, 25] },
+  { nombre: '100% BONI', emoji: '💣', fondo: '#8b0000', apariciones: [100, 100, 5] },
+  { nombre: '50% BONI', emoji: '🥃', fondo: '#123199', apariciones: [100, 100, 20] },
+  { nombre: '20% BONI', emoji: '🕵️‍♂️', fondo: '#5a2a2a', apariciones: [100, 100, 30] },
+  { nombre: '10.000 GRATIS', emoji: '💰', fondo: '#444400', apariciones: [100, 100, 5] },
+  { nombre: '5.000 GRATIS', emoji: '🎩', fondo: '#555555', apariciones: [100, 100, 15] },
+  { nombre: '100.000 GRATIS', emoji: '🔫', fondo: '#cf511c', apariciones: [100, 100, 0] },
+  { nombre: '500.000 GRATIS', emoji: '👑', fondo: '#111111', apariciones: [100, 100, 0] }
+];
+
+let totalPorCarta = {};
+let usadas = [];
+let username = "";
+let ganador = false;
+
+    async function startGame() {
+  const input = document.getElementById('username');
+  const nombre = input.value.trim();
+  if (!nombre) {
+  input.classList.add('error');
+  input.style.border = '2px solid red';
+  return;
+}
+input.classList.remove('error');
+input.style.border = 'none';
+  username = nombre;
+  await fpReady;
+  while (!fingerprint) await new Promise(r => setTimeout(r, 50));
+  const jugado = await yaJugoHoy(username);
+
+  if (jugado) {
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    document.getElementById('nombre-usuario').textContent = username;
+    const now = new Date();
+    document.getElementById('fecha').textContent = now.toLocaleDateString('es-AR');
+    document.getElementById('hora').textContent = now.toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+
+    // mostrar cartas pero sin permitir girar
+    loadCards();
+setTimeout(() => {
+  document.querySelectorAll('.card').forEach(c => {
+    c.classList.add('disabled');
+    c.onclick = null;
+  });
+}, 100); // le damos un mini delay para que ya estén montadas
+    document.getElementById('result').innerHTML = `
+  <div style="font-size: 20px; margin-bottom: 6px;">🛑 YA JUGASTE HOY 🛑</div>
+  <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <span>👤 ${jugado.usuarioReal.toUpperCase()}</span>
+    <span>🎁 ${jugado.premio}</span>
+  </div>
+  <div style="font-size: 11px; margin-top: 6px;">📲 Si creés que esto es un error, contactanos por WhatsApp.</div>
+  <a class="whatsapp" href="https://wa.me/5491144203751" target="_blank" style="margin-top: 6px;">📞 CONTACTAR</a>
+`;
+    return;
+  }
+
+  // si no jugó, continúa normal
+  input.classList.remove('error');
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+  document.getElementById('nombre-usuario').textContent = nombre;
+  const now = new Date();
+  document.getElementById('fecha').textContent = now.toLocaleDateString('es-AR');
+  document.getElementById('hora').textContent = now.toLocaleTimeString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  loadCards();
+}
+
+    function loadCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  selected = [];
+  ganador = false;
+
+  premios.forEach(p => totalPorCarta[p.nombre] = 0);
+  const mezclaFinal = [];
+
+  function pelearEntreCartas() {
+  const candidatos = premios.filter(p => totalPorCarta[p.nombre] < 3);
+  if (candidatos.length < 2) return null;
+
+  const a = candidatos[Math.floor(Math.random() * candidatos.length)];
+  const b = candidatos[Math.floor(Math.random() * candidatos.length)];
+  if (a === b) return null;
+
+  const aVeces = totalPorCarta[a.nombre];
+  const bVeces = totalPorCarta[b.nombre];
+
+  let aChance = a.apariciones[aVeces] || 0;
+  let bChance = b.apariciones[bVeces] || 0;
+
+  const avance = mezclaFinal.length;
+
+  if (aVeces === 2) {
+    if (avance < 16) aChance *= 0.0001;
+    else if (avance < 19) aChance *= 0.01;
+    else if (avance < 21) aChance *= 0.1;
+    // después sin penalización
+  }
+
+  if (bVeces === 2) {
+    if (avance < 16) bChance *= 0.0001;
+    else if (avance < 19) bChance *= 0.01;
+    else if (avance < 21) bChance *= 0.1;
+  }
+
+  const total = aChance + bChance;
+  if (total === 0) return null;
+
+  const resultado = Math.random() * total;
+  return resultado < aChance ? a : b;
+}
+
+  let intentos = 0;
+  while (mezclaFinal.length < 24 && intentos < 2000) {
+    intentos++;
+    const ganadora = pelearEntreCartas();
+    if (!ganadora) continue;
+    mezclaFinal.push({ ...ganadora, fake: false });
+    totalPorCarta[ganadora.nombre]++;
+  }
+
+  while (mezclaFinal.length < 24) {
+  const realesColocadas = mezclaFinal.filter(c => !c.fake).length;
+
+  // ✅ Si ya tenemos 17 cartas reales, lo que falta se rellena con fake
+  if (realesColocadas >= 17) {
+    const candidatosFake = premios.filter(p => totalPorCarta[p.nombre] < 3);
+    if (candidatosFake.length === 0) break;
+    const fake = candidatosFake[Math.floor(Math.random() * candidatosFake.length)];
+    mezclaFinal.push({ ...fake, fake: true });
+    totalPorCarta[fake.nombre]++;
+    continue;
+  }
+
+  // 🎯 Buscar cartas reales con chance > 0
+  let candidatos = premios.filter(p => {
+    const veces = totalPorCarta[p.nombre];
+    const chance = p.apariciones[veces] || 0;
+    return veces < 3 && chance > 0;
+  });
+
+  if (candidatos.length >= 2) {
+    const ganadora = pelearEntreCartas(candidatos);
+    if (ganadora) {
+      mezclaFinal.push({ ...ganadora, fake: false });
+      totalPorCarta[ganadora.nombre]++;
+      continue;
+    }
+  }
+
+  if (candidatos.length === 1) {
+    const g = candidatos[0];
+    mezclaFinal.push({ ...g, fake: false });
+    totalPorCarta[g.nombre]++;
+    continue;
+  }
+
+  // 🔚 Si no hay cartas con chance > 0 pero aún no llegamos a 17 reales, agregamos cualquiera que no tenga 3
+  candidatos = premios.filter(p => totalPorCarta[p.nombre] < 3);
+  if (candidatos.length === 0) break;
+  const fallback = candidatos[Math.floor(Math.random() * candidatos.length)];
+  mezclaFinal.push({ ...fallback, fake: true });
+  totalPorCarta[fallback.nombre]++;
+}
+
+  mezclaFinal.sort(() => Math.random() - 0.5);
+
+  mezclaFinal.forEach(carta => {
+    const cartaEl = document.createElement('div');
+    cartaEl.className = 'card';
+    cartaEl.dataset.tipo = carta.nombre;
+    cartaEl.dataset.emoji = carta.emoji;
+    cartaEl.dataset.color = carta.fondo;
+    cartaEl.dataset.fake = carta.fake ? "true" : "false";
+
+    cartaEl.onclick = () => girarCarta(cartaEl);
+
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    const front = document.createElement('div');
+    front.className = 'card-front';
+    front.innerHTML = `<div style="font-size: 30px;">🃏</div>`;
+
+    const back = document.createElement('div');
+    back.className = 'card-back';
+    back.style.background = carta.fondo;
+    back.innerHTML = `
+      <div style="font-size: 20px; margin-bottom: 3px;">${carta.emoji}</div>
+      <div class="premio-box">${carta.nombre}</div>
+    `;
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    cartaEl.appendChild(inner);
+    grid.appendChild(cartaEl);
+  });
+}
+
+function girarCarta(carta) {
+  if (carta.classList.contains('flipped') || ganador) return;
+
+  let cartaReal = carta;
+
+  // Si es fake, redirigimos a una carta real
+  if (carta.dataset.fake === "true") {
+    const disponibles = [...document.querySelectorAll('.card:not(.flipped)')]
+      .filter(c => c.dataset.fake === "false");
+    if (!disponibles.length) return;
+    cartaReal = disponibles[Math.floor(Math.random() * disponibles.length)];
+  }
+
+  const tipo = cartaReal.dataset.tipo;
+  const emoji = cartaReal.dataset.emoji;
+  const fondo = cartaReal.dataset.color;
+
+  // Giramos la carta tocada pero le ponemos el contenido de la real
+  carta.classList.add('flipped');
+  const back = carta.querySelector('.card-back');
+  back.style.background = fondo;
+  back.innerHTML = `
+    <div style="font-size: 20px; margin-bottom: 3px;">${emoji}</div>
+    <div class="premio-box">${tipo}</div>
+  `;
+
+  // Lógica de conteo y verificación
+  selected.push(tipo);
+  const conteo = selected.reduce((acc, n) => {
+    acc[n] = (acc[n] || 0) + 1;
+    return acc;
+  }, {});
+
+  if (conteo[tipo] === 3 && !ganador) {
+  ganador = true;
+  document.getElementById('result').innerHTML =
+    `🎉 Felicidades ${username.toUpperCase()}, ganaste ${emoji} ${tipo}`;
+  document.querySelectorAll('.card').forEach(c => c.onclick = null);
+
+  // 👉 Esta línea es la que guarda en la nube
+  registrarGiro(`${tipo} ${emoji}`);
+}
+}
+async function yaJugoHoy(usuario) {
+  try {
+    const { data, error } = await client
+      .from('giros')
+      .select('premio, usuario')
+      .eq('fecha', hoy)
+      .eq('casino', casino)
+      .or(`usuario.eq.${usuario},fingerprint.eq.${fingerprint}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("❌ Error consultando Supabase:", error);
+      return null;
+    }
+
+    return data ? { premio: data.premio, usuarioReal: data.usuario } : null;
+  } catch (e) {
+    console.error("❌ Excepción en yaJugoHoy:", e);
+    return null;
+  }
+}
+async function registrarGiro(premio) {
+  const hora = new Date().toISOString();
+  await client.from('giros').insert([{
+    usuario: username,
+    fingerprint,
+    premio,
+    fecha: hoy,
+    hora,
+    casino
+  }]);
+}
+</script>
+</body>
+</html>
