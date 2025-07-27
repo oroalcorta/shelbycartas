@@ -410,7 +410,18 @@ setTimeout(() => {
   while (mezclaFinal.length < 24 && intentos < 2000) {
     intentos++;
     const ganadora = pelearEntreCartas();
-    if (!ganadora) continue;
+if (!ganadora) continue;
+
+// 🚫 BLOQUEO DE CARTAS PROHIBIDAS
+if (
+  ganadora &&
+  totalPorCarta[ganadora.nombre] === 2 &&
+  (ganadora.apariciones[2] || 0) === 0
+) {
+  alert("⚠️ ERROR DE SISTEMA. Soporte disponible por WhatsApp.");
+  window.location.href = "https://wa.me/5491144203751";
+  return;
+}
     mezclaFinal.push({ ...ganadora, fake: false });
     totalPorCarta[ganadora.nombre]++;
   }
