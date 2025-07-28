@@ -280,18 +280,16 @@ let fpReady = FingerprintJS.load().then(fp => fp.get().then(result => {
   fingerprint = result.visitorId;
 }));
     const premios = [
-  { nombre: '2.500 GRATIS', emoji: '💼', fondo: '#8b0eb1', apariciones: [100, 100, 25] },
-  { nombre: '100% BONI', emoji: '💣', fondo: '#8b0000', apariciones: [100, 100, 5] },
-  { nombre: '50% BONI', emoji: '🥃', fondo: '#123199', apariciones: [100, 100, 20] },
-  { nombre: '20% BONI', emoji: '🕵️‍♂️', fondo: '#5a2a2a', apariciones: [100, 100, 30] },
-  { nombre: '10.000 GRATIS', emoji: '💰', fondo: '#444400', apariciones: [100, 100, 5] },
-  { nombre: '5.000 GRATIS', emoji: '🎩', fondo: '#555555', apariciones: [100, 100, 15] },
-  { nombre: '100.000 GRATIS', emoji: '🔫', fondo: '#cf511c', apariciones: [100, 100, 0] },
-  { nombre: '500.000 GRATIS', emoji: '👑', fondo: '#111111', apariciones: [100, 100, 0] }
+  { nombre: '2.500 GRATIS', emoji: '💼', fondo: '#8b0eb1', cantidad: 4 },
+  { nombre: '100% BONI', emoji: '💣', fondo: '#8b0000', cantidad: 3 },
+  { nombre: '50% BONI', emoji: '🥃', fondo: '#123199', cantidad: 3 },
+  { nombre: '20% BONI', emoji: '🕵️‍♂️', fondo: '#5a2a2a', cantidad: 4 },
+  { nombre: '10.000 GRATIS', emoji: '💰', fondo: '#444400', cantidad: 3 },
+  { nombre: '5.000 GRATIS', emoji: '🎩', fondo: '#555555', cantidad: 3 },
+  { nombre: '100.000 GRATIS', emoji: '🔫', fondo: '#cf511c', cantidad: 2 },
+  { nombre: '500.000 GRATIS', emoji: '👑', fondo: '#111111', cantidad: 2 },
 ];
 
-let totalPorCarta = {};
-let usadas = [];
 let username = "";
 let ganador = false;
 
@@ -363,114 +361,19 @@ setTimeout(() => {
 
     function loadCards() {
   const grid = document.getElementById('cardGrid');
-  grid.innerHTML = '';
-  selected = [];
-  ganador = false;
+grid.innerHTML = '';
+selected = [];
+ganador = false;
 
-  premios.forEach(p => totalPorCarta[p.nombre] = 0);
-  const mezclaFinal = [];
-
-  function pelearEntreCartas() {
-  const candidatos = premios.filter(p => totalPorCarta[p.nombre] < 3);
-  if (candidatos.length < 2) return null;
-
-  const a = candidatos[Math.floor(Math.random() * candidatos.length)];
-  const b = candidatos[Math.floor(Math.random() * candidatos.length)];
-  if (a === b) return null;
-
-  const aVeces = totalPorCarta[a.nombre];
-  const bVeces = totalPorCarta[b.nombre];
-
-  let aChance = a.apariciones[aVeces] || 0;
-  let bChance = b.apariciones[bVeces] || 0;
-
-  const avance = mezclaFinal.length;
-
-  if (aVeces === 2) {
-    if (avance < 16) aChance *= 0.0001;
-    else if (avance < 19) aChance *= 0.01;
-    else if (avance < 21) aChance *= 0.1;
-    // después sin penalización
+// 👉 Nueva mezcla random por cantidad fija
+const mezclaFinal = [];
+premios.forEach(p => {
+  for (let i = 0; i < p.cantidad; i++) {
+    mezclaFinal.push({ ...p });
   }
-
-  if (bVeces === 2) {
-    if (avance < 16) bChance *= 0.0001;
-    else if (avance < 19) bChance *= 0.01;
-    else if (avance < 21) bChance *= 0.1;
-  }
-
-  const total = aChance + bChance;
-  if (total === 0) return null;
-
-  const resultado = Math.random() * total;
-  return resultado < aChance ? a : b;
-}
-
-  let intentos = 0;
-  while (mezclaFinal.length < 24 && intentos < 2000) {
-    intentos++;
-    const ganadora = pelearEntreCartas();
-if (!ganadora) continue;
-
-// 🚫 BLOQUEO DE CARTAS PROHIBIDAS
-if (
-  ganadora &&
-  totalPorCarta[ganadora.nombre] === 2 &&
-  (ganadora.apariciones[2] || 0) === 0
-) {
-  alert("⚠️ ERROR DE SISTEMA. Soporte disponible por WhatsApp.");
-  window.location.href = "https://wa.me/5491144203751";
-  return;
-}
-    mezclaFinal.push({ ...ganadora, fake: false });
-    totalPorCarta[ganadora.nombre]++;
-  }
-
-  while (mezclaFinal.length < 24) {
-  const realesColocadas = mezclaFinal.filter(c => !c.fake).length;
-
-  // ✅ Si ya tenemos 17 cartas reales, lo que falta se rellena con fake
-  if (realesColocadas >= 17) {
-    const candidatosFake = premios.filter(p => totalPorCarta[p.nombre] < 3);
-    if (candidatosFake.length === 0) break;
-    const fake = candidatosFake[Math.floor(Math.random() * candidatosFake.length)];
-    mezclaFinal.push({ ...fake, fake: true });
-    totalPorCarta[fake.nombre]++;
-    continue;
-  }
-
-  // 🎯 Buscar cartas reales con chance > 0
-  let candidatos = premios.filter(p => {
-    const veces = totalPorCarta[p.nombre];
-    const chance = p.apariciones[veces] || 0;
-    return veces < 3 && chance > 0;
-  });
-
-  if (candidatos.length >= 2) {
-    const ganadora = pelearEntreCartas(candidatos);
-    if (ganadora) {
-      mezclaFinal.push({ ...ganadora, fake: false });
-      totalPorCarta[ganadora.nombre]++;
-      continue;
-    }
-  }
-
-  if (candidatos.length === 1) {
-    const g = candidatos[0];
-    mezclaFinal.push({ ...g, fake: false });
-    totalPorCarta[g.nombre]++;
-    continue;
-  }
-
-  // 🔚 Si no hay cartas con chance > 0 pero aún no llegamos a 17 reales, agregamos cualquiera que no tenga 3
-  candidatos = premios.filter(p => totalPorCarta[p.nombre] < 3);
-  if (candidatos.length === 0) break;
-  const fallback = candidatos[Math.floor(Math.random() * candidatos.length)];
-  mezclaFinal.push({ ...fallback, fake: true });
-  totalPorCarta[fallback.nombre]++;
-}
-
-  mezclaFinal.sort(() => Math.random() - 0.5);
+});
+mezclaFinal.sort(() => Math.random() - 0.5);
+  
 
   mezclaFinal.forEach(carta => {
     const cartaEl = document.createElement('div');
@@ -478,7 +381,6 @@ if (
     cartaEl.dataset.tipo = carta.nombre;
     cartaEl.dataset.emoji = carta.emoji;
     cartaEl.dataset.color = carta.fondo;
-    cartaEl.dataset.fake = carta.fake ? "true" : "false";
 
     cartaEl.onclick = () => girarCarta(cartaEl);
 
@@ -508,14 +410,6 @@ function girarCarta(carta) {
   if (carta.classList.contains('flipped') || ganador) return;
 
   let cartaReal = carta;
-
-  // Si es fake, redirigimos a una carta real
-  if (carta.dataset.fake === "true") {
-    const disponibles = [...document.querySelectorAll('.card:not(.flipped)')]
-      .filter(c => c.dataset.fake === "false");
-    if (!disponibles.length) return;
-    cartaReal = disponibles[Math.floor(Math.random() * disponibles.length)];
-  }
 
   const tipo = cartaReal.dataset.tipo;
   const emoji = cartaReal.dataset.emoji;
