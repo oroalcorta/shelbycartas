@@ -442,10 +442,15 @@ function girarCarta(carta) {
 }
 }
 async function yaJugoHoy(usuario) {
+  await fpReady;
+  while (!fingerprint) await new Promise(r => setTimeout(r, 50));
+
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
   try {
     const { data, error } = await client
       .from('giros')
-      .select('premio, usuario')
+      .select('premio, usuario, fingerprint')
       .eq('fecha', hoy)
       .eq('casino', casino)
       .or(`usuario.eq.${usuario},fingerprint.eq.${fingerprint}`)
@@ -457,9 +462,22 @@ async function yaJugoHoy(usuario) {
       return null;
     }
 
-    return data ? { premio: data.premio, usuarioReal: data.usuario } : null;
+    if (!isSafari) {
+      return data ? { premio: data.premio, usuarioReal: data.usuario } : null;
+    }
+
+    if (data && data.usuario === usuario) {
+      return { premio: data.premio, usuarioReal: data.usuario };
+    }
+
+    if (data && data.usuario !== usuario) {
+      console.warn("⚠️ Safari: fingerprint ya usado pero con usuario distinto. Permitido una sola vez.");
+      return null;
+    }
+
+    return null; // No hay registros, dejar jugar
   } catch (e) {
-    console.error("❌ Excepción en yaJugoHoy:", e);
+    console.error("❌ Excepción en yaJugoHoy (cartas):", e);
     return null;
   }
 }
